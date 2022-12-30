@@ -24,8 +24,6 @@ void getClInfo() {
     for (int platformIndex = 0; platformIndex < numPlatforms; platformIndex++) {
 
         cl_platform_id platform = platformIds[platformIndex];
-        // printf("Platform ID: %d, ", *(int *)(void *)platform);
-        // printf("Platform ID: %d, ", (struct _cl_platform_id *)platform);
         char *value = getClPlatformParam(platform, CL_PLATFORM_NAME);
         fprintf(stderr, "Platform Name: %s\n", value);
         free(value);
@@ -53,7 +51,7 @@ void getClInfo() {
         cl_uint getClDeviceParamUInt(cl_device_id device, cl_device_info paramName);
         size_t getClDeviceParamSizeT(cl_device_id device, cl_device_info paramName);
         char * getClDeviceParamChar(cl_device_id device, cl_device_info paramName);
-
+        size_t * getClDeviceParamSizeTArray(cl_device_id device, cl_device_info paramName, cl_uint dimensions);
 
         cl_uint numDevices = 0;
         cl_device_id *devices = getClGPUDevices(platform, &numDevices);
@@ -70,6 +68,10 @@ void getClInfo() {
             fprintf(stderr, "        Device Name: %s\n", charValue);
             free(charValue);
 
+            charValue = getClDeviceParamChar(device, CL_DRIVER_VERSION);
+            fprintf(stderr, "        Driver Version: %s\n", charValue);
+            free(charValue);
+
             cl_ulong longValue = getClDeviceParamULong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
             fprintf(stderr, "        Max Mem Alloc Size: %ld Bytes\n", longValue);
 
@@ -82,8 +84,14 @@ void getClInfo() {
             size_t size = getClDeviceParamSizeT(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
             fprintf(stderr, "        Max Work Group Size: %ld\n", size);
 
-            size = getClDeviceParamSizeT(device, CL_DEVICE_MAX_WORK_GROUP_SIZE);
-            fprintf(stderr, "        Max Work Group Size: %ld\n", size);
+            cl_uint maxDimensions = getClDeviceParamUInt(device, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS);
+            fprintf(stderr, "        Max Work Item Dimensions: %d\n", maxDimensions);
+
+            size_t *itemSizes = getClDeviceParamSizeTArray(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, maxDimensions);
+            for (int dimension = 0; dimension < maxDimensions; dimension++) {
+                fprintf(stderr, "            Item Size of Dimension %d: %ld\n", dimension + 1, itemSizes[dimension]);
+            }
+            free(itemSizes);
         }
 
         free(devices);
@@ -173,6 +181,12 @@ size_t getClDeviceParamSizeT(cl_device_id device, cl_device_info paramName) {
     return result;
 }
 
+size_t * getClDeviceParamSizeTArray(cl_device_id device, cl_device_info paramName, cl_uint dimensions) {
+    size_t *result = calloc(dimensions, sizeof(size_t));
+    getClDeviceParamNonTyped(device, paramName, result, dimensions * sizeof(size_t));
+
+    return result;
+}
 
 // TODO: printPlatform
 // TODO: printDevice
