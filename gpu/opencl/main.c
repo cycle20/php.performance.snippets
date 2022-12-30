@@ -1,14 +1,142 @@
 #include <stdio.h>
+#include <string.h>
 
 #define CL_TARGET_OPENCL_VERSION 120
 #include <CL/cl.h>
 
 int main(void) {
     void getClInfo();
+    void clInit(cl_uint platformIndex, cl_uint deviceIndex);
 
     getClInfo();
+    clInit(0, 0);
 
     return 0;
+}
+
+typedef struct {
+    cl_platform_id platform;
+    cl_device_id device;
+    cl_context context;
+    cl_program program;
+    cl_kernel kernel;
+    cl_command_queue commandQueue;
+} clStateStruct;
+
+static clStateStruct clState;
+
+/// @brief Initialization for OpenCL
+/// @param platformIndex zero-based index of an available platform
+/// @param deviceIndex zero-based index of an available device
+void clInit(cl_uint platformIndex, cl_uint deviceIndex) {
+    // TODO
+    cl_platform_id * getClPlatforms(cl_uint *numberOfPlatforms);
+    void clLogError(char *message, char *fileName, uint16_t lineNumber);
+    void clRelease();
+
+    cl_platform_id *platforms;
+    cl_uint numberOfPlatforms;
+
+
+    // Reset global state structure
+    memset(&clState, 0, sizeof(clState));
+
+
+    platforms = getClPlatforms(&numberOfPlatforms);
+    if (platformIndex >= numberOfPlatforms || platformIndex < 0) {
+        fprintf(stderr, "Invalid platform selected: %d\n", platformIndex + 1);
+        free(platforms);
+        exit(1);
+    }
+
+    clState.platform = platforms[platformIndex];
+
+    cl_device_id * getClGPUDevices(cl_platform_id platform, cl_uint *numDevices);
+    cl_device_id *devices;
+    cl_uint numberOfDevices;
+
+    devices = getClGPUDevices(clState.platform, &numberOfDevices);
+    if (deviceIndex >= numberOfDevices || deviceIndex < 0) {
+        fprintf(stderr, "Invalid device selected: %d\n", deviceIndex + 1);
+        free(platforms);
+        free(devices);
+        exit(1);
+    }
+
+    clState.device = devices[deviceIndex];
+
+    free(devices);
+    free(platforms);
+
+    // create CL resources
+    cl_int result = CL_SUCCESS;
+    clState.context = clCreateContext( NULL, 1, &clState.device, NULL, NULL, &result);
+    if (result != CL_SUCCESS) {
+        clLogError("clCreateContext() failed", __FILE__, __LINE__);
+        clRelease();
+        exit(1);
+    }
+
+    clRelease();
+}
+
+/// @brief Clean up allocated CL resources.
+void clRelease() {
+    void clLogError(char *message, char *fileName, uint16_t lineNumber);
+
+    cl_int result = CL_SUCCESS;
+
+    if (clState.commandQueue != NULL) {
+        result = clFlush(clState.commandQueue);
+        if (result != CL_SUCCESS) {
+            clLogError("clFlush() failed", __FILE__, __LINE__);
+        }
+        result = clFinish(clState.commandQueue);
+        if (result != CL_SUCCESS) {
+            clLogError("clFinish() failed", __FILE__, __LINE__);
+        }
+    }
+    // release kernel
+    if (clState.kernel != NULL) {
+        result = clReleaseKernel(clState.kernel);
+        if (result != CL_SUCCESS) {
+            clLogError("clReleaseKernel() failed", __FILE__, __LINE__);
+        }
+    }
+    // release program
+    if (clState.program != NULL) {
+        result = clReleaseProgram(clState.program);
+        if (result != CL_SUCCESS) {
+            clLogError("() failed", __FILE__, __LINE__);
+        }
+    }
+    // TODO: release further resources...
+    // if (clState...) {
+    //     result = clReleaseMemObject();
+    //     if (result != CL_SUCCESS) {
+    //         clLogError("clReleaseMemObject() failed", __FILE__, __LINE__);
+    //     }
+    // }
+    // release command queue
+    if (clState.commandQueue != NULL) {
+        result = clReleaseCommandQueue(clState.commandQueue);
+        if (result != CL_SUCCESS) {
+            clLogError("clReleaseCommandQueue() failed", __FILE__, __LINE__);
+        }
+    }
+    // release context
+    if (clState.context != NULL) {
+        result = clReleaseContext(clState.context);
+        if (result != CL_SUCCESS) {
+            clLogError("clReleaseContext() failed", __FILE__, __LINE__);
+        }
+    }
+    // free malloc-ed memory for cl_mem objects
+    // free(...);
+}
+
+void clLogError(char *message, char *fileName, uint16_t lineNumber) {
+    fprintf(stderr, "(%s:%d) %s\n", fileName, lineNumber, message);
 }
 
 void getClInfo() {
@@ -96,11 +224,9 @@ void getClInfo() {
 
         free(devices);
     }
-
-}
-
-void clInit() {
-    // TODO
+    if (platformIds != NULL) {
+        free(platformIds);
+    }
 }
 
 cl_platform_id * getClPlatforms(cl_uint *numPlatforms) {
