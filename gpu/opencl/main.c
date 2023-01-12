@@ -29,7 +29,7 @@ static clStateStruct clState;
 /// @param platformIndex zero-based index of an available platform
 /// @param deviceIndex zero-based index of an available device
 void clInit(cl_uint platformIndex, cl_uint deviceIndex) {
-    // TODO
+
     cl_platform_id * getClPlatforms(cl_uint *numberOfPlatforms);
     void clLogError(char *message, char *fileName, uint16_t lineNumber);
     void clRelease();
@@ -76,6 +76,9 @@ void clInit(cl_uint platformIndex, cl_uint deviceIndex) {
         clRelease();
         exit(1);
     }
+
+    // TODO: load and build program, create kernel, etc.
+
 
     clRelease();
 }
