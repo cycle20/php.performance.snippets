@@ -1,0 +1,9 @@
+[
+  {
+    "directory": "./build",
+    "arguments": [
+      "gcc", "-Wall", "-g", "-o", "main", "main.c"
+    ],
+    "file": "main.c"
+  }
+]
