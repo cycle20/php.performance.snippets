@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define ALIGNMENT8 8
 #define ALIGNMENT16 16
@@ -8,13 +9,16 @@
 
 int main(void)
 {
+  void iterateWithNoAlignment();
   void printAddressInfo(void *ptr);
 
   unsigned int *i __attribute__((aligned(ALIGNMENT8)));
   unsigned int j __attribute__((aligned(ALIGNMENT8))) = 117;
 
-  printf("int size: %ld; current alignment: %d, biggest alignment: %d\n",
+  printf("int size: %ld, long double size: %ld;\n"
+         "current alignment: %d, biggest alignment: %d\n",
          sizeof(unsigned int),
+         sizeof(long double),
          ALIGNMENT8,
          __BIGGEST_ALIGNMENT__);
 
@@ -30,10 +34,42 @@ int main(void)
   free(number);
 
   // some 'heavy' test
-
+  iterateWithNoAlignment();
 
   return 0;
 }
+
+#define ITEM_COUNT 1000 * 1000 * 200
+
+void iterateWithNoAlignment() {
+  void printAddressInfo(void *ptr);
+
+  printf("\n\n\n>>>> Iteration with no alignment\n");
+
+  printf("MaxInt:\n%20d,\nItem count:\n%20d\n", __INT32_MAX__, ITEM_COUNT);
+
+  // allocate with extra byte for shift
+  long double *numbers = calloc(ITEM_COUNT + 1, sizeof(long double));
+  long double *savedAddress = numbers;
+  if (numbers == NULL) {
+    perror("calloc failed");
+
+    return;
+  }
+
+  // change the address
+  numbers = (void *)numbers + 3;
+
+  //printAddressInfo(&numbers);
+  printAddressInfo(numbers);
+
+  for (unsigned int i = 0; i < ITEM_COUNT; i++) {
+    numbers[i] = i; //sqrtl(i) * 2.0 / 3.0;
+  }
+
+  free(savedAddress);
+}
+
 
 void printAddressInfo(void *ptr)
 {

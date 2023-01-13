@@ -1,6 +1,6 @@
 set -e
 set -x
 
-gcc -g main.c -o main
+gcc -Wall -g main.c -o main -lm
 
 ./main
