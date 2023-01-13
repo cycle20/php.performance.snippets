@@ -1,14 +1,14 @@
 #include <stdio.h>
 
-#define ALIGNMENT 8
+#define ALIGNMENT8 8
 
 int main(void) {
-  unsigned int *i __attribute__((aligned (ALIGNMENT)));
-  unsigned int j __attribute__((aligned (ALIGNMENT))) = 117;
+  unsigned int *i __attribute__((aligned (ALIGNMENT8)));
+  unsigned int j __attribute__((aligned (ALIGNMENT8))) = 117;
 
   printf("int size: %ld; current alignment: %d, biggest alignment: %d\n",
     sizeof(unsigned int),
-    ALIGNMENT,
+    ALIGNMENT8,
     __BIGGEST_ALIGNMENT__);
 
   i = &j;
