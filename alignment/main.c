@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #define ALIGNMENT8 8
 #define ALIGNMENT16 16
@@ -22,6 +23,14 @@ int main(void)
   printf("address of i: %p\naddress of j: %p\n", &i, i);
 
   printAddressInfo(i);
+
+
+  long double *number = aligned_alloc(ALIGNMENT16, sizeof(double));
+  printAddressInfo(number);
+  free(number);
+
+  // some 'heavy' test
+
 
   return 0;
 }
